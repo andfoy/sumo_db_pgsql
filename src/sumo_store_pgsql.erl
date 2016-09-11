@@ -100,6 +100,7 @@ persist(Doc,  #{conn := Conn} = State) ->
 
         {InsertSql, InsertValues};
       Id ->
+        SlotsFun = fun(N) -> [" $", integer_to_list(N), " "],
         NPColumnsNamesCSV = string:join(NPColumnNames, ", "),
         InsertSlots = lists:map(SlotsFun, lists:seq(1, length(NPFieldNames))),
         InsertSlotsCSV = string:join(InsertSlots, ", "),
