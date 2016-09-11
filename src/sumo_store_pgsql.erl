@@ -100,11 +100,12 @@ persist(Doc,  #{conn := Conn} = State) ->
 
         {InsertSql, InsertValues};
       Id ->
-        SlotsFun = fun(N) -> [" $", integer_to_list(N), " "],
         NPColumnsNamesCSV = string:join(NPColumnNames, ", "),
+
+        SlotsFun = fun(N) -> [" $", integer_to_list(N), " "]  end,
         InsertSlots = lists:map(SlotsFun, lists:seq(1, length(NPFieldNames))),
         InsertSlotsCSV = string:join(InsertSlots, ", "),
-        io:format("~s ~n", [id]),
+
         UpdateFun = fun(FieldName, {N, Slots}) ->
                         Slot = [FieldName, " = $", integer_to_list(N), " "],
                         {N + 1, [Slot | Slots]}
@@ -116,17 +117,15 @@ persist(Doc,  #{conn := Conn} = State) ->
         NPCount = length(NPFieldNames),
         IdSlot = ["$", integer_to_list(NPCount + 1)],
 
-        UpdateSql = ["INSERT INTO ", TableName,
+        UpdateSql = ["INSERT INTO ",
+                     TableName,
                      " ( ", NPColumnsNamesCSV, " ) ",
                      " VALUES ",
                      " ( ", InsertSlotsCSV, " ) ",
-                     "ON CONFLICT (key) ",
-                     "UPDATE "
+                     " ON CONFLICT (key) ",
+                     "UPDATE ", TableName,
                      " SET ",
-                     UpdateSlotsCSV,
-                     " WHERE ",
-                     escape(IdField), " = ", IdSlot],
-        % INSERT INTO upsert values(1, 'Foo'), (2, 'Bar') ON CONFLICT (key) UPDATE SET val = EXCLUDED.val;
+                     UpdateSlotsCSV],
         UpdateValues = NPColumnValues ++ [Id],
 
         {UpdateSql, UpdateValues}
